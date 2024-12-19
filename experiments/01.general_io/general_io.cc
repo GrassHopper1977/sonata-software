@@ -50,26 +50,37 @@ void __cheri_compartment("main_comp") main_entry()
 	rpi_gpio()->set_output_enable(rpi_out_num, true);
 	rpi_gpio()->set_output(rpi_out_num, rp_out_state);
 
-	// Setting up the multiplexor to drive the PWM on RPi Header pin 12
-	// OutputPin::rph_g12 - The pin
+	// Setting up the multiplexor to drive the PWMs on RPi Header pins 12 & 13
 	Debug::log("RPi GPIO12 output pins has {} options.", SonataPinmux::output_pin_options(SonataPinmux::OutputPin::rph_g12));
+	Debug::log("RPi GPIO13 output pins has {} options.", SonataPinmux::output_pin_options(SonataPinmux::OutputPin::rph_g13));
 	// OutputPin::rph_g12 has 3 possible options and you can get them from looking at the table here: https://lowrisc.github.io/sonata-system/doc/ip/pinmux/index.html
 	// OutputPin::rph_g12 multiplexor options:
 	//   0 = Off, 
 	//   1 = Default RPi GPIO12 behaviour (gpio_0_ios_12),
 	//   2 = PWM output (pwm_out_1)
 	// The mutliplexor works in a different way to everything else in that is directly tied to it's memory in logic before you start! They did say that it would be changing at some stage.
-	if(true == (new SonataPinmux())->output_pin_select(SonataPinmux::OutputPin::rph_g12, 2)) {
+	auto pmx = SonataPinmux();
+	if(true == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g12, 2)) {
+	//if(true == SonataPinmux().output_pin_select(SonataPinmux::OutputPin::rph_g12, 2)) {
 		Debug::log("Success! RPi GPIO12 set to PWM0");
 	} else {
 		Debug::log("ERROR! Failed to set RPi GPIO12 set to PWM0");
 	}
-	// Set PWM output 1 to 0%
-	uint8_t dutyCycle = 0;
-	uint32_t pwmOutput = 0;
-	Debug::log("PWM1 duty cycle {}/0xc8", dutyCycle);
-	MMIO_CAPABILITY(SonataPwm, pwm)->output_set(pwmOutput, 200,       dutyCycle); // Set duty cycle output to 50% (so should read 1.5V). Period and duty cycle are in clock cycles.
-	//                                   PWM output-^       ^-period   ^- duty cycle
+	if(true == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g13, 2)) {
+		Debug::log("Success! RPi GPIO13 set to PWM1");
+	} else {
+		Debug::log("ERROR! Failed to set RPi GPIO13 set to PWM1");
+	}
+	uint8_t dutyCycle0 = 0;	// Set PWM output 0 to 0%
+	uint8_t dutyCycle1 = 200; // Set PWM output 1 to 100%
+	uint32_t pwmOutput0 = 0;
+	uint32_t pwmOutput1 = 1;
+	uint32_t pwmPeriod = 200;
+	Debug::log("PWM0 duty cycle {}/0xc8", dutyCycle0);
+	MMIO_CAPABILITY(SonataPwm, pwm)->output_set(pwmOutput0, pwmPeriod,       dutyCycle0); // Period and duty cycle are in clock cycles.
+	//                                    PWM output-^         ^-period         ^- duty cycle
+	Debug::log("PWM1 duty cycle {}/0xc8", dutyCycle1);
+	MMIO_CAPABILITY(SonataPwm, pwm)->output_set(pwmOutput1, pwmPeriod,       dutyCycle1); // Period and duty cycle are in clock cycles.
 
 	uint8_t phase = 0;
 	uint8_t currentLed = 0;
@@ -103,14 +114,23 @@ void __cheri_compartment("main_comp") main_entry()
 				if(colours[2] == 0) {
 					phase = 0;
 
-					// Change PWM1's duty cycle
-					if(dutyCycle >= 200) {
-						dutyCycle = 0;
+					// Change PWM0's duty cycle
+					if(dutyCycle0 >= 200) {
+						dutyCycle0 = 0;
 					} else {
-						dutyCycle += 100;
+						dutyCycle0 += 100;
 					}
-					Debug::log("PWM{} duty cycle {}/0xc8", pwmOutput, dutyCycle);
-					MMIO_CAPABILITY(SonataPwm, pwm)->output_set(pwmOutput, 200, dutyCycle); // Set duty cycle output.
+					Debug::log("PWM{} duty cycle {}/0xc8", pwmOutput0, dutyCycle0);
+					MMIO_CAPABILITY(SonataPwm, pwm)->output_set(pwmOutput0, pwmPeriod, dutyCycle0); // Set duty cycle output.
+
+					// Change PWM1's duty cycle
+					if(dutyCycle1 == 0) {
+						dutyCycle1 = 200;
+					} else {
+						dutyCycle1 -= 100;
+					}
+					Debug::log("PWM{} duty cycle {}/0xc8", pwmOutput1, dutyCycle1);
+					MMIO_CAPABILITY(SonataPwm, pwm)->output_set(pwmOutput1, pwmPeriod, dutyCycle1); // Set duty cycle output.
 				}
 				break;
 		}
