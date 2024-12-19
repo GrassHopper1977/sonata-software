@@ -19,7 +19,7 @@ concurrency:
 jobs:
   checks:
     name: Quality Check
-    runs-on: nixos-24.05
+    runs-on: nixos
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
           submodules: 'recursive'
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v24
+        uses: cachix/install-nix-action@v30
 
       - name: Nix Format Check
         run: nix fmt -- . --check
@@ -43,4 +43,4 @@ jobs:
           nix build -L .?submodules=1#sonata-tests
 
       - name: Run Nix Checks
-        run: nix flake check -L .?submodules=1
+        run: nix flake check -L .?submodules=1#
