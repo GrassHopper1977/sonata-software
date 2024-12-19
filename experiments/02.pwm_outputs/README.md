@@ -27,3 +27,6 @@ This code configures the PWM outputs at different duty cycles and outputs them t
 |        PMOD0 |    -    |  0.32V  |  0.30V  |    -    |    -    |    -    |
 |        PMOD1 |    -    |    -    |    -    |  0.30V  |  0.30V  |    -    |
 |        PMODC |    -    |    -    |    -    |    -    |    -    |    -    |
+
+## Conclusion
+There looks to be an issue with the PWM module. Alex Jones (whi is working on the Sonata) says it's an RTL bug and will be fixed in V1.1.
