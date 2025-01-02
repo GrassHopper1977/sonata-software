@@ -8,34 +8,37 @@ This is a simple test to create an oscillating On/Off pattern on the GPIO on teh
 
 The plan is to set all the RPi header GPIO to outputs. We will then output a square wave on GPIO0. The joystick left and right will be used to change which output we are driving so that they can all be tested to check that they all work. We will test the outputs with a multimeter or logic analyser.
 
-| RPi GPIO |  RPi Header # | Output? |
-| -------- | ------------- | ------- |
-|     0    |       27      |   3V3   | 
-|     1    |       28      |   3V3   | 	
-|     2    |        3      |   3V3   | 	
-|     3    |        5      |   3V3   |	
-|     4    |        7      |   3V3   |	
-|     5    |       29      |   3V3   |	
-|     6    |       31      |   Yes   |	
-|     7    |       26      |   3V3   |	
-|     8    |       24      |   3V3   |	
-|     9    |       21      |    0V   |	
-|    10    |       19      |    0V   |	
-|    11    |       23      |    0V   |	
-|    12    |       32      |   Yes   |	
-|    13    |       33      |   Yes   |	
-|    14    |        8      |   3V3   |	
-|    15    |       10      |   Yes   |	
-|    16    |       36      |   3V3   |	
-|    17    |       11      |   3V3   |	
-|    18    |       12      |   3V3   |	
-|    19    |       35      |   Yes   |	
-|    20    |       38      |    0V   |	
-|    21    |       40      |    0V   |	
-|    22    |       15      |   Yes   |	
-|    23    |       16      |    0V   |	
-|    24    |       18      |   Yes   |	
-|    25    |       22      |   Yes   |	
-|    26    |       37      |   3V3   |	
-|    27    |       13      |   Yes   |
+This table records if we got our expected squarewave output or something else instead. We then repeated teh test, this time we explicitly set the pinmux to GPIO for each output.
 
+| RPi GPIO |  RPi Header # | No pinmux | With Pinmux |
+| -------- | ------------- | ------- | ------ |
+|     0    |       27      |   3V3   |   Yes  |
+|     1    |       28      |   3V3   | 	 Yes  |
+|     2    |        3      |   3V3   | 	 Yes  |
+|     3    |        5      |   3V3   |	 Yes  |
+|     4    |        7      |   3V3   |	 Yes  |
+|     5    |       29      |   3V3   |	 3V3  |
+|     6    |       31      |   Yes   |	 Yes  |
+|     7    |       26      |   3V3   |	 Yes  |
+|     8    |       24      |   3V3   |	 Yes  |
+|     9    |       21      |    0V   |	 Yes  |
+|    10    |       19      |    0V   |	 Yes  |
+|    11    |       23      |    0V   |	 Yes  |
+|    12    |       32      |   Yes   |	 Yes  |
+|    13    |       33      |   Yes   |	 Yes  |
+|    14    |        8      |   3V3   |	 Yes  |
+|    15    |       10      |   Yes   |	 Yes  |
+|    16    |       36      |   3V3   |	 Yes  |
+|    17    |       11      |   3V3   |	 Yes  |
+|    18    |       12      |   3V3   |	 Yes  |
+|    19    |       35      |   Yes   |	 Yes  |
+|    20    |       38      |    0V   |	 Yes  |
+|    21    |       40      |    0V   |	 Yes  |
+|    22    |       15      |   Yes   |	 Yes  |
+|    23    |       16      |    0V   |	 Yes  |
+|    24    |       18      |   Yes   |	 Yes  |
+|    25    |       22      |   Yes   |	 Yes  |
+|    26    |       37      |   3V3   |	 Yes  |
+|    27    |       13      |   Yes   |   Yes  |
+
+You can see that, if we don't use the pinmux, the pins do not function as expected. With teh pinmux we still seem to have an issue with GPIO5.
