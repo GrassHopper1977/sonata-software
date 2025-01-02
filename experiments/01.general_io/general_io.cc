@@ -44,11 +44,17 @@ void __cheri_compartment("main_comp") main_entry()
 	leds->update();
 	set_rgb_led_colour(leds, colours);
 
+	auto pmx = SonataPinmux();
+
 	// Set RPi header GPIO27 to an output and we will flash it on and off.
 	bool rp_out_state = true;
 	uint32_t rpi_out_num = 27;
 	rpi_gpio()->set_output_enable(rpi_out_num, true);
 	rpi_gpio()->set_output(rpi_out_num, rp_out_state);
+	// Ensure that the pinmux has the RPi GPIO connected to the pin.
+	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g27, 1)) {
+		Debug::log("ERROR! Failed to set RPi GPIO27 set to GPIO");
+	}
 
 	// Setting up the multiplexor to drive the PWMs on RPi Header pins 12 & 13
 	Debug::log("RPi GPIO12 output pins has {} options.", SonataPinmux::output_pin_options(SonataPinmux::OutputPin::rph_g12));
@@ -59,7 +65,6 @@ void __cheri_compartment("main_comp") main_entry()
 	//   1 = Default RPi GPIO12 behaviour (gpio_0_ios_12),
 	//   2 = PWM output (pwm_out_1)
 	// The mutliplexor works in a different way to everything else in that is directly tied to it's memory in logic before you start! They did say that it would be changing at some stage.
-	auto pmx = SonataPinmux();
 	if(true == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g12, 2)) {
 	//if(true == SonataPinmux().output_pin_select(SonataPinmux::OutputPin::rph_g12, 2)) {
 		Debug::log("Success! RPi GPIO12 set to PWM0");
