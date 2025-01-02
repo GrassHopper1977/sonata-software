@@ -17,7 +17,7 @@ This table records if we got our expected squarewave output or something else in
 |     2    |        3      |   3V3   | 	 Yes  |
 |     3    |        5      |   3V3   |	 Yes  |
 |     4    |        7      |   3V3   |	 Yes  |
-|     5    |       29      |   3V3   |	 3V3  |
+|     5    |       29      |   3V3   |	 Yes  |
 |     6    |       31      |   Yes   |	 Yes  |
 |     7    |       26      |   3V3   |	 Yes  |
 |     8    |       24      |   3V3   |	 Yes  |
@@ -41,4 +41,4 @@ This table records if we got our expected squarewave output or something else in
 |    26    |       37      |   3V3   |	 Yes  |
 |    27    |       13      |   Yes   |   Yes  |
 
-You can see that, if we don't use the pinmux, the pins do not function as expected. With teh pinmux we still seem to have an issue with GPIO5.
+You can see that, if we don't use the pinmux, the pins do not function as expected. With the pinmux it all functions correctly.

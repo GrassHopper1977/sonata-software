@@ -82,88 +82,88 @@ void __cheri_compartment("main_comp") main_entry()
 	// NOTE: You must explicitly set the pinmux the RPi header's GPIO for each GPIO that you wish to use.
 	auto pmx = SonataPinmux();
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g0, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO0 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO0 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g1, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO1 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO1 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g2_sda, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO2 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO2 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g3_scl, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO3 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO3 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g4, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO4 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO4 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g5, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO5 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO5 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g6, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO6 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO6 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g7, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO7 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO7 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g8, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO8 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO8 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g9, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO9 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO9 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g10, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO10 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO10 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g11, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO11 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO11 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g12, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO12 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO12 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g13, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO13 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO13 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_txd0, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO14 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO14 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_rxd0, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO15 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO15 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g16, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO16 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO16 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g17, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO17 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO17 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g18, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO18 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO18 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g19, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO19 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO19 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g20, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO20 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO20 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g21, 2)) {
-		Debug::log("ERROR! Faile to set RPi GPIO21 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO21 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g22, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO22 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO22 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g23, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO23 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO23 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g24, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO24 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO24 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g25, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO25 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO25 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g26, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO26 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO26 set to GPIO");
 	}
 	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g27, 1)) {
-		Debug::log("ERROR! Faile to set RPi GPIO27 set to GPIO");
+		Debug::log("ERROR! Failed to set RPi GPIO27 set to GPIO");
 	}
 	for(int i = 0; i < RPI_GPIO_MAX; i++) {
 		rpi_gpio()->set_output_enable(i, true);
@@ -199,6 +199,7 @@ void __cheri_compartment("main_comp") main_entry()
 			}
 		}
 
+		// The left and right on the joystick allow us to move through the GPIOs that we are writing to.
 		js = gpio_data()->read_joystick();
 		if((js & ~js_old & SonataJoystick::Left) == SonataJoystick::Left) {
 			out_num++;
@@ -214,15 +215,6 @@ void __cheri_compartment("main_comp") main_entry()
 			}
 			display_gpio_details(out_num);
 		}
-		// if((js & ~js_old & SonataJoystick::Up) == SonataJoystick::Up) {
-		// 	Debug::log("Joystick: Up");
-		// }
-		// if((js & ~js_old & SonataJoystick::Down) == SonataJoystick::Down) {
-		// 	Debug::log("Joystick: Down");
-		// }
-		// if((js & ~js_old & SonataJoystick::Pressed) == SonataJoystick::Pressed) {
-		// 	Debug::log("Joystick: Pressed");
-		// }
 		js_old = js;
 	}
 
