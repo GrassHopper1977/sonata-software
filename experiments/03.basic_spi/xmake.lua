@@ -26,7 +26,7 @@ firmware("basic_spi")
                 compartment = "main_comp",
                 priority = 2,
                 entry_point = "main_entry",
-                stack_size = 0x200,
+                stack_size = 0x300,
                 trusted_stack_frames = 1
             },
         }, {expand = false})
