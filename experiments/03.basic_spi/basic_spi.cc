@@ -61,11 +61,14 @@ auto spi_mod2()
 #define MCP_CMD_WRITE	0x20
 #define MCP_ADDR_MAX	0x0FFF
 
-void set_chip_select(volatile SonataSpi* mod, uint8_t chipSelect, bool value)
-{
-	const uint32_t CsBit = (1u << chipSelect);
-	mod->cs = value ? (mod->cs | CsBit) : (mod->cs & ~CsBit);
-}
+// void set_chip_select(volatile SonataSpi* mod, uint8_t chipSelect, bool value)
+// {
+// 	const uint32_t CsBit = (1u << chipSelect);
+// 	mod->cs = value ? (mod->cs | CsBit) : (mod->cs & ~CsBit);
+// }
+#define CLEAR_BIT(REG, BIT) (REG = REG & (~(1U << (BIT))))
+#define SET_BIT(REG, BIT)   (REG = REG | (1U << (BIT)))
+
 
 /// Thread entry point.
 void __cheri_compartment("main_comp") main_entry()
@@ -110,7 +113,7 @@ void __cheri_compartment("main_comp") main_entry()
 	} else {
 		Debug::log("ERROR! Failed to set RPi GPIO8 to SPI1_CE0");
 	}
-	set_chip_select(spi_mod1(), 0, true);
+	// set_chip_select(spi_mod1(), 0, true);
 #endif
 	// Set up the SPI1 module
 	spi_mod1()->init(
@@ -118,6 +121,9 @@ void __cheri_compartment("main_comp") main_entry()
 	    false,	// Clock Phasse = 0
 	    true,	// MSB first = true
 	    SPI_CLOCK_SPEED_SETTING);	// The settings is the length of a half period of the SPI clock, measured in system clock cycles reduced by 1.
+#ifndef SPI_1_CS0_GPIO
+	SET_BIT(spi_mod1()->cs, 0);
+#endif
 	Debug::log("SPI1: Configured.");
 
 	// SPI2 - COPI
@@ -155,7 +161,7 @@ void __cheri_compartment("main_comp") main_entry()
 	} else {
 		Debug::log("ERROR! Failed to set RPi GPIO8 to SPI2_CE0");
 	}
-	set_chip_select(spi_mod2(), 0, true);
+	// set_chip_select(spi_mod2(), 0, true);
 #endif
 	// Set up the SPI2   module
 	// The system clock is 40000000Hz (40MHz - 25ns)
@@ -165,6 +171,9 @@ void __cheri_compartment("main_comp") main_entry()
 	    false,	// Clock Phasse = 0
 	    true,	// MSB first = true
 	    SPI_CLOCK_SPEED_SETTING);	// The settings is the length of a half period of the SPI clock, measured in system clock cycles reduced by 1.
+#ifndef SPI_2_CS0_GPIO
+	SET_BIT(spi_mod1()->cs, 0);
+#endif
 	Debug::log("SPI2: Configured.");
 
 	// SPI1: RESET the MCP2518FD
@@ -172,11 +181,15 @@ void __cheri_compartment("main_comp") main_entry()
 	Debug::log("SPI1: MCP 2518FD RESET: {}", data_reset);
 #ifdef SPI_1_CS0_GPIO
 	rpi_gpio()->set_output(spi1_ce0_num, false);
+#else
+	CLEAR_BIT(spi_mod1()->cs, 0);
 #endif
 	spi_mod1()->blocking_write(&data_reset, 1);		// Only sending CLK, no COPI, CIPO or CE
-#ifdef SPI_1_CS0_GPIO
 	spi_mod1()->wait_idle();	// Wait for the Tx to finish.
+#ifdef SPI_1_CS0_GPIO
 	rpi_gpio()->set_output(spi1_ce0_num, true);
+#else
+	SET_BIT(spi_mod1()->cs, 0);
 #endif
 	Debug::log("SPI1: Reset sent.");
 
@@ -184,11 +197,15 @@ void __cheri_compartment("main_comp") main_entry()
 	Debug::log("SPI2: MCP 2518FD RESET: {}", data_reset);
 #ifdef SPI_2_CS0_GPIO
 	rpi_gpio()->set_output(spi2_ce0_num, false);
+#else
+	CLEAR_BIT(spi_mod2()->cs, 0);
 #endif
 	spi_mod2()->blocking_write(&data_reset, 1);		// Only sending CLK, no COPI, CIPO or CE
-#ifdef SPI_2_CS0_GPIO
 	spi_mod2()->wait_idle();	// Wait for the Tx to finish.
+#ifdef SPI_2_CS0_GPIO
 	rpi_gpio()->set_output(spi2_ce0_num, true);
+#else
+	SET_BIT(spi_mod2()->cs, 0);
 #endif
 	Debug::log("SPI2: Reset sent.");
 
