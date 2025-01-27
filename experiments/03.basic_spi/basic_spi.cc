@@ -8,10 +8,8 @@
 #include <platform-pinmux.hh>
 #include <platform-spi.hh>
 
-// If defined then use the GPIO on the RPi Header as CS0, otherwise the SPI module will drive the line for us.
-#define SPI_1_CS0_GPIO
-// If defined then use the GPIO on the RPi Header as CS0, otherwise the SPI module will drive the line for us.
-#define SPI_2_CS0_GPIO
+// If defined then we will also attempt to include an example using blocking_transfer(const uint8_t txData[], uint8_t rxData[], uint16_t len)
+//#define SPI_TRANSFER_TEST
 
 // The SPI clock calculation
 // The settings is the length of a half period of the SPI clock, measured in system clock cycles reduced by 1.
@@ -71,6 +69,8 @@ void __cheri_compartment("main_comp") main_entry()
 	// Print welcome, along with the compartment's name to the default UART.
 	Debug::log("Sonata SPI tests");
 
+	Debug::log("SPI_CLOCK_SPEED_SETTING: {}", SPI_CLOCK_SPEED_SETTING);
+
 	// Setting up the pinmux.
 	auto pmx = SonataPinmux();
 	// SPI1 - COPI
@@ -91,16 +91,6 @@ void __cheri_compartment("main_comp") main_entry()
 	} else {
 		Debug::log("ERROR! Failed to set SPI1_CIPO to RPi GPIO09");
 	}
-#ifdef SPI_1_CS0_GPIO
-	Debug::log("Manually drive RPi GPIO8 for SPI1_CE0");
-	// SPI1 - CE0 (GPIO set to Output and default to high)
-	uint32_t spi1_ce0_num = 8;
-	rpi_gpio()->set_output_enable(spi1_ce0_num, true);
-	rpi_gpio()->set_output(spi1_ce0_num, true);
-	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g8, 2)) {
-		Debug::log("ERROR! Failed to set RPi GPIO8 set to GPIO");
-	}
-#else
 	Debug::log("Letting SPI module drive RPi GPIO8 for SPI1_CE0");
 	// SPI1 - CE0 (using SPI module to drive the CE0 pin)
 	if(true == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g8, 1)) {
@@ -108,16 +98,13 @@ void __cheri_compartment("main_comp") main_entry()
 	} else {
 		Debug::log("ERROR! Failed to set RPi GPIO8 to SPI1_CE0");
 	}
-#endif
 	// Set up the SPI1 module
 	spi_mod1()->init(
 		false,	// Clock Polarity = 0
 	    false,	// Clock Phasse = 0
 	    true,	// MSB first = true
 	    SPI_CLOCK_SPEED_SETTING);	// The settings is the length of a half period of the SPI clock, measured in system clock cycles reduced by 1.
-#ifndef SPI_1_CS0_GPIO
 	SET_BIT(spi_mod1()->cs, 0);
-#endif
 	Debug::log("SPI1: Configured.");
 
 	// SPI2 - COPI
@@ -138,16 +125,6 @@ void __cheri_compartment("main_comp") main_entry()
 	} else {
 		Debug::log("ERROR! Failed to set SPI1_CIPO to RPi GPIO19");
 	}
-#ifdef SPI_2_CS0_GPIO
-	Debug::log("Manually drive RPi GPI18 for SPI2_CE0");
-	// SPI2 - CE0 (GPIO set to Output and default to high)
-	uint32_t spi2_ce0_num = 18;
-	rpi_gpio()->set_output_enable(spi2_ce0_num, true);
-	rpi_gpio()->set_output(spi2_ce0_num, true);
-	if(false == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g18, 2)) {
-		Debug::log("ERROR! Failed to set RPi GPI18 set to GPIO");
-	}
-#else
 	Debug::log("Letting SPI module drive RPi GPI18 for SPI2_CE0");
 	// SPI2 - CE0 (using SPI module to drive the CE0 pin)
 	if(true == pmx.output_pin_select(SonataPinmux::OutputPin::rph_g18, 1)) {
@@ -155,59 +132,66 @@ void __cheri_compartment("main_comp") main_entry()
 	} else {
 		Debug::log("ERROR! Failed to set RPi GPIO8 to SPI2_CE0");
 	}
-#endif
-	// Set up the SPI2   module
-	// The system clock is 40000000Hz (40MHz - 25ns)
-	// The tickrate is 100Hz (10ms)
 	spi_mod2()->init(
 		false,	// Clock Polarity = 0
 	    false,	// Clock Phasse = 0
 	    true,	// MSB first = true
 	    SPI_CLOCK_SPEED_SETTING);	// The settings is the length of a half period of the SPI clock, measured in system clock cycles reduced by 1.
-#ifndef SPI_2_CS0_GPIO
 	SET_BIT(spi_mod1()->cs, 0);
-#endif
 	Debug::log("SPI2: Configured.");
 
 	// SPI1: RESET the MCP2518FD
 	uint8_t data_reset = MCP_CMD_RESET;
 	Debug::log("SPI1: MCP 2518FD RESET: {}", data_reset);
-#ifdef SPI_1_CS0_GPIO
-	rpi_gpio()->set_output(spi1_ce0_num, false);
-#else
 	CLEAR_BIT(spi_mod1()->cs, 0);
-#endif
 	spi_mod1()->blocking_write(&data_reset, 1);		// Only sending CLK, no COPI, CIPO or CE
 	spi_mod1()->wait_idle();	// Wait for the Tx to finish.
-#ifdef SPI_1_CS0_GPIO
-	rpi_gpio()->set_output(spi1_ce0_num, true);
-#else
 	SET_BIT(spi_mod1()->cs, 0);
-#endif
 	Debug::log("SPI1: Reset sent.");
 
 	// SPI2: RESET the MCP2518FD
 	Debug::log("SPI2: MCP 2518FD RESET: {}", data_reset);
-#ifdef SPI_2_CS0_GPIO
-	rpi_gpio()->set_output(spi2_ce0_num, false);
-#else
 	CLEAR_BIT(spi_mod2()->cs, 0);
-#endif
 	spi_mod2()->blocking_write(&data_reset, 1);		// Only sending CLK, no COPI, CIPO or CE
 	spi_mod2()->wait_idle();	// Wait for the Tx to finish.
-#ifdef SPI_2_CS0_GPIO
-	rpi_gpio()->set_output(spi2_ce0_num, true);
-#else
 	SET_BIT(spi_mod2()->cs, 0);
-#endif
 	Debug::log("SPI2: Reset sent.");
 
-	// The first two bytes send the read command and the address. READ from 0x0E03
-	uint8_t data_tx[2] = {MCP_CMD_READ | 0x0E, 0x03};
+#ifdef SPI_TRANSFER_TEST
+	uint8_t data_tx2[6] = {MCP_CMD_READ | 0x0E, 0x03, 0x0, 0x0, 0x0, 0x0};	// The first two bytes send the read command and the address. READ from 0x0E03
+	uint8_t data_rx2[6] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};	// Empty bytes which will be written to.
+#else
+	uint8_t data_tx[2] = {MCP_CMD_READ | 0x0E, 0x03};	// The first two bytes send the read command and the address. READ from 0x0E03
 	uint8_t data_rx[4] = {0x0, 0x0, 0x0, 0x0};	// Empty bytes which will be written to.
+#endif
 	int i;
 	while(true) {
+#ifdef SPI_TRANSFER_TEST
 		thread_millisecond_wait(1000);
+		// SPI 1
+		for(i = 0; i < 6; i++) {
+			data_rx2[i] = 0;
+		}
+		Debug::log("SPI1 Blocking Transfer: Reading addr 0x0E03...");
+		Debug::log("SPI1: Tx2 0: {}", data_tx2[0]);
+		Debug::log("SPI1: Tx2 1: {}", data_tx2[1]);
+		Debug::log("SPI1: Tx2 2: {}", data_tx2[2]);
+		Debug::log("SPI1: Tx2 3: {}", data_tx2[3]);
+		Debug::log("SPI1: Tx2 4: {}", data_tx2[4]);
+		Debug::log("SPI1: Tx2 5: {}", data_tx2[5]);
+		CLEAR_BIT(spi_mod1()->cs, 0);
+		spi_mod1()->blocking_transfer(data_tx2, data_rx2, 6);	// Writes and reads simultaneously.
+		spi_mod1()->wait_idle();	// Wait for the Rx to finish.
+		SET_BIT(spi_mod1()->cs, 0);
+		Debug::log("SPI1 Blocking Transfer: Data sent.");
+		Debug::log("SPI1: Rx2 0: {}", data_rx2[0]);
+		Debug::log("SPI1: Rx2 1: {}", data_rx2[1]);
+		Debug::log("SPI1: Rx2 2: {}", data_rx2[2]);
+		Debug::log("SPI1: Rx2 3: {}", data_rx2[3]);
+		Debug::log("SPI1: Rx2 4: {}", data_rx2[4]);
+		Debug::log("SPI1: Rx2 5: {}", data_rx2[5]);
+
+#else	// SPI_TRANSFER_TEST
 
 		// SPI 1
 		for(i = 0; i < 4; i++) {
@@ -216,16 +200,12 @@ void __cheri_compartment("main_comp") main_entry()
 		Debug::log("SPI1: Reading addr 0x0E03...");
 		Debug::log("SPI1: Tx 0: {}", data_tx[0]);
 		Debug::log("SPI1: Tx 1: {}", data_tx[1]);
-#ifdef SPI_1_CS0_GPIO
-		rpi_gpio()->set_output(spi1_ce0_num, false);
-#endif
+		CLEAR_BIT(spi_mod1()->cs, 0);
 		spi_mod1()->blocking_write(data_tx, 2);	// Write the command bytes
 		spi_mod1()->wait_idle();	// Wait for the Tx to finish.
 		spi_mod1()->blocking_read(data_rx, 4);	// Read the data bytes.
-#ifdef SPI_1_CS0_GPIO
 		spi_mod1()->wait_idle();	// Wait for the Rx to finish.
-		rpi_gpio()->set_output(spi1_ce0_num, true);
-#endif
+		SET_BIT(spi_mod1()->cs, 0);
 		Debug::log("SPI1: Data sent.");
 		Debug::log("SPI1: Rx 0: {}", data_rx[0]);
 		Debug::log("SPI1: Rx 1: {}", data_rx[1]);
@@ -241,20 +221,19 @@ void __cheri_compartment("main_comp") main_entry()
 		Debug::log("SPI2: Reading addr 0x0E03...");
 		Debug::log("SPI2: Tx 0: {}", data_tx[0]);
 		Debug::log("SPI2: Tx 1: {}", data_tx[1]);
-#ifdef SPI_2_CS0_GPIO
-		rpi_gpio()->set_output(spi2_ce0_num, false);
-#endif
+		CLEAR_BIT(spi_mod2()->cs, 0);
 		spi_mod2()->blocking_write(data_tx, 2);	// Write the command bytes
 		spi_mod2()->wait_idle();	// Wait for the Tx to finish.
 		spi_mod2()->blocking_read(data_rx, 4);	// Read the data bytes.
-#ifdef SPI_2_CS0_GPIO
 		spi_mod2()->wait_idle();	// Wait for the Rx to finish.
-		rpi_gpio()->set_output(spi2_ce0_num, true);
-#endif
+		SET_BIT(spi_mod2()->cs, 0);
 		Debug::log("SPI2: Data sent.");
 		Debug::log("SPI2: Rx 0: {}", data_rx[0]);
 		Debug::log("SPI2: Rx 1: {}", data_rx[1]);
 		Debug::log("SPI2: Rx 2: {}", data_rx[2]);
 		Debug::log("SPI2: Rx 3: {}", data_rx[3]);
+#endif	// SPI_TRANSFER_TEST
+
+		thread_millisecond_wait(5000);		
 	}
 }

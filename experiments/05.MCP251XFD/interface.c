@@ -15,7 +15,6 @@
 #define CLEAR_BIT(REG, BIT) (REG = REG & (~(1U << (BIT))))
 #define SET_BIT(REG, BIT)   (REG = REG | (1U << (BIT)))
 
-
 typedef struct {
     SonataSpi *spi;
     uint8_t spi_num;
