@@ -9,6 +9,7 @@
 #include <platform-spi.hh>
 
 // If defined then we will also attempt to include an example using blocking_transfer(const uint8_t txData[], uint8_t rxData[], uint16_t len)
+// It hasn't been added to platform-spi.hh yet but I have it working in some test code.
 //#define SPI_TRANSFER_TEST
 
 // The SPI clock calculation
@@ -158,8 +159,8 @@ void __cheri_compartment("main_comp") main_entry()
 	Debug::log("SPI2: Reset sent.");
 
 #ifdef SPI_TRANSFER_TEST
-	uint8_t data_tx2[6] = {MCP_CMD_READ | 0x0E, 0x03, 0x0, 0x0, 0x0, 0x0};	// The first two bytes send the read command and the address. READ from 0x0E03
-	uint8_t data_rx2[6] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};	// Empty bytes which will be written to.
+	uint8_t data_tx[6] = {MCP_CMD_READ | 0x0E, 0x03, 0x0, 0x0, 0x0, 0x0};	// The first two bytes send the read command and the address. READ from 0x0E03
+	uint8_t data_rx[6] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};	// Empty bytes which will be written to.
 #else
 	uint8_t data_tx[2] = {MCP_CMD_READ | 0x0E, 0x03};	// The first two bytes send the read command and the address. READ from 0x0E03
 	uint8_t data_rx[4] = {0x0, 0x0, 0x0, 0x0};	// Empty bytes which will be written to.
@@ -170,26 +171,49 @@ void __cheri_compartment("main_comp") main_entry()
 		thread_millisecond_wait(1000);
 		// SPI 1
 		for(i = 0; i < 6; i++) {
-			data_rx2[i] = 0;
+			data_rx[i] = 0;
 		}
-		Debug::log("SPI1 Blocking Transfer: Reading addr 0x0E03...");
-		Debug::log("SPI1: Tx2 0: {}", data_tx2[0]);
-		Debug::log("SPI1: Tx2 1: {}", data_tx2[1]);
-		Debug::log("SPI1: Tx2 2: {}", data_tx2[2]);
-		Debug::log("SPI1: Tx2 3: {}", data_tx2[3]);
-		Debug::log("SPI1: Tx2 4: {}", data_tx2[4]);
-		Debug::log("SPI1: Tx2 5: {}", data_tx2[5]);
+		Debug::log("SPI1: Reading addr 0x0E03...");
+		Debug::log("SPI1: Tx 0: {}", data_tx[0]);
+		Debug::log("SPI1: Tx 1: {}", data_tx[1]);
+		Debug::log("SPI1: Tx 2: {}", data_tx[2]);
+		Debug::log("SPI1: Tx 3: {}", data_tx[3]);
+		Debug::log("SPI1: Tx 4: {}", data_tx[4]);
+		Debug::log("SPI1: Tx 5: {}", data_tx[5]);
 		CLEAR_BIT(spi_mod1()->cs, 0);
-		spi_mod1()->blocking_transfer(data_tx2, data_rx2, 6);	// Writes and reads simultaneously.
+		spi_mod1()->blocking_transfer(data_tx, data_rx, 6);	// Writes and reads simultaneously.
 		spi_mod1()->wait_idle();	// Wait for the Rx to finish.
 		SET_BIT(spi_mod1()->cs, 0);
-		Debug::log("SPI1 Blocking Transfer: Data sent.");
-		Debug::log("SPI1: Rx2 0: {}", data_rx2[0]);
-		Debug::log("SPI1: Rx2 1: {}", data_rx2[1]);
-		Debug::log("SPI1: Rx2 2: {}", data_rx2[2]);
-		Debug::log("SPI1: Rx2 3: {}", data_rx2[3]);
-		Debug::log("SPI1: Rx2 4: {}", data_rx2[4]);
-		Debug::log("SPI1: Rx2 5: {}", data_rx2[5]);
+		Debug::log("SPI1: Data sent.");
+		Debug::log("SPI1: Rx 0: {}", data_rx[0]);
+		Debug::log("SPI1: Rx 1: {}", data_rx[1]);
+		Debug::log("SPI1: Rx 2: {}", data_rx[2]);
+		Debug::log("SPI1: Rx 3: {}", data_rx[3]);
+		Debug::log("SPI1: Rx 4: {}", data_rx[4]);
+		Debug::log("SPI1: Rx 5: {}", data_rx[5]);
+
+		// SPI 2
+		for(i = 0; i < 6; i++) {
+			data_rx[i] = 0;
+		}
+		Debug::log("SPI2: Reading addr 0x0E03...");
+		Debug::log("SPI2: Tx 0: {}", data_tx[0]);
+		Debug::log("SPI2: Tx 1: {}", data_tx[1]);
+		Debug::log("SPI2: Tx 2: {}", data_tx[2]);
+		Debug::log("SPI2: Tx 3: {}", data_tx[3]);
+		Debug::log("SPI2: Tx 4: {}", data_tx[4]);
+		Debug::log("SPI2: Tx 5: {}", data_tx[5]);
+		CLEAR_BIT(spi_mod2()->cs, 0);
+		spi_mod2()->blocking_transfer(data_tx, data_rx, 6);	// Writes and reads simultaneously.
+		spi_mod2()->wait_idle();	// Wait for the Rx to finish.
+		SET_BIT(spi_mod2()->cs, 0);
+		Debug::log("SPI2: Data sent.");
+		Debug::log("SPI2: Rx 0: {}", data_rx[0]);
+		Debug::log("SPI2: Rx 1: {}", data_rx[1]);
+		Debug::log("SPI2: Rx 2: {}", data_rx[2]);
+		Debug::log("SPI2: Rx 3: {}", data_rx[3]);
+		Debug::log("SPI2: Rx 4: {}", data_rx[4]);
+		Debug::log("SPI2: Rx 5: {}", data_rx[5]);
 
 #else	// SPI_TRANSFER_TEST
 
