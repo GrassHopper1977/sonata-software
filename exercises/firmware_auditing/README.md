@@ -2,7 +2,7 @@
 Copyright lowRISC Contributors.
 SPDX-License-Identifier: Apache-2.0
 -->
-# Firmware Auditing Exercise
+# Firmware auditing exercise
 
 First, make sure to go to the [building the exercises][] section to see how the exercises are built.
 
@@ -42,10 +42,10 @@ A very simple function `is_sealed_capability` is then defined, which takes the J
 
 Next, we use Rego's functionality to create a rule `no_sealed_capabilities_exist`, which should evaluate to `true` only if no sealed capabilities are used in any of the firmware's compartments.
 To do this, we perform a list comprehension, unifying with a wildcard variable to iterate over and filter all imported capabilities of all compartments in the firmware.
-We then use the built-in`count` function to ensure that the resulting array is empty.
+We then use the built-in `count` function to ensure that the resulting array is empty.
 
 Skipping to the end of the file, we can then create a simple Boolean `valid` rule which corresponds to whether `no_sealed_capabilities_exist` is defined or not.
-To convert the undefined value to a Boolean, we use the `default` keyword, which lets us provide a `false` asignment as a fall-through if no other rule definitions match.
+To convert the undefined value to a Boolean, we use the `default` keyword, which lets us provide a `false` assignment as a fall-through if no other rule definitions match.
 
 We can run this policy on our example firmware using the following command:
 
@@ -56,7 +56,7 @@ cheriot-audit --board=cheriot-rtos/sdk/boards/sonata.json \
               --query='data.no_seal.valid'
 ```
 
-Because `sealed_capability.cc` currently doesn't use any sealed capabilities, this policy should evalute to `true`.
+Because `sealed_capability.cc` currently doesn't use any sealed capabilities, this policy should evaluate to `true`.
 
 Now, navigate to [`sealed_capability.cc`][] and comment out or remove the line `uint32_t arr[ArrSize];`.
 Then, uncomment or add the line `uint32_t *arr = new uint32_t[ArrSize];`.
@@ -67,7 +67,7 @@ Rebuilding the exercises (using `xmake -P exercises`) and running the same comma
 
 However, it may not immediately be clear why the policy failed.
 When designing such a policy, you can see that it may be helpful to have a rule that lets us inspect the details of any sealed capabilities.
-We do this with our final `sealed_capability_info` rule, which constructs ojects storing the contents, key, and compartment of each sealed capability.
+We do this with our final `sealed_capability_info` rule, which constructs objects storing the contents, key, and compartment of each sealed capability.
 
 > ℹ️ Note the use of unification here.
 > We iterate over `input.compartments` with the non-defined variable `owner`, and then map the value that is bound this variable to the `owner` field of our new object.
@@ -80,7 +80,7 @@ You should see an output that looks something like this:
   "key":"MallocKey", "owner":"sealed_capability"}]
 ```
 
-This tells us where the sealed capabilty in our firmware originates - a static sealed object owned by our `sealed_capability` compartment, which is used by the RTOS' allocator for authorising memory allocation.
+This tells us where the sealed capability in our firmware originates - a static sealed object owned by our `sealed_capability` compartment, which is used by the RTOS' allocator for authorising memory allocation.
 Try experimenting by adding more functionality to this toy example!
 For example, try creating your own sealed capabilities and check the result.
 You might also try investigating the values of the different rules that we've made, and filtering or auditing other properties of the capabilities.
@@ -101,7 +101,7 @@ We then start by defining which functions in which compartments are allowed to r
 We do this by using a list, with each item in this list containing the name of the compartment, and a list of the function signatures that can run with interrupts disabled.
 
 We allow two specific functions to run without interrupts in the `disable_interrupts` compartment, and allow none to run in the `bad_disable_interrupts` compartment.
-Despite this, if you check the the source files, `not_allowed` is actually running with interrupts disabled.
+Despite this, if you check the source files, `not_allowed` is actually running with interrupts disabled.
 In a practical scenario, `disable_interrupts` might be a trusted library, where `bad_disable_interrupts` is only allowed to call functions from `disable_interrupts`, and not disable interrupts itself.
 
 We can then use this list to construct a smaller set containing just the compartments we expect to be present, which will be useful as the first condition that we want to check is that all (and only) the required compartments are present.
@@ -128,9 +128,8 @@ It is not always trivial to manually demangle these symbols.
 Luckily for us, the libstdc++ cross-vendor C++ ABI defines a function `abi::__cxa_demangle` to help demangle these names, and `cheriot-audit` wraps and exposes this through the built-in `export_entry_demangle` function.
 This function takes the compartment name and export symbol as its two arguments.
 
-> ℹ️ The next rule `patched_export_entry_demangle` is not relevant to this example.
+> ℹ️ You don't need to know how the next rule `patched_export_entry_demangle` works for this example.
 > It simply manually adds support for an additional library export name mangling prefix that is not currently checked for.
-> However, it is a useful example of string operations in Rego, as well as another case of rules with multiple definitions.
 > We have one rule for export symbols that start with `__library_export_`, converting this to an `__export_` prefix, and otherwise we simply pass the symbol to `export_entry_demangle`.
 
 Now that we have a method to filter for exported symbols with disabled interrupts, and the means to demangle names, we can create a rule to check that a compartment only has the specified disabled interrupts.
@@ -188,11 +187,11 @@ Fortunately, `cheriot-audit` defines two functions that do exactly this! `data.r
 There is also a helpful built-in rule `data.rtos.all_sealed_capabilities_are_valid` which decodes all allocator capabilities to ensure that they are all valid for auditing.
 
 Using these built-in functions, we define a rule `allocator_capabilities` which filters through the input for allocator capabilities, and augments each with information about their compartment.
-This lets us define our first condition `all_allocations_less_than(limit)` as a parameterised function.
+This lets us define our first condition `all_allocations_leq(limit)` as a parameterised function.
 This rule ensures that no individual allocator capability is greater than a given limit, ensuring that only a certain amount of memory can be allocated in a single `malloc`.
 
 Next, we can create a rule to extract the list of unique compartments that allocate on the heap.
-We can do this using Rego's `contains` keyword and some term-matching syntax to extract the `"owner"` field.
+We can do this using Rego's `contains` keyword and some term-matching syntax to extract the "owner" field.
 Using this, we now have a construct which we can use to sum all quotas within a given compartment.
 By using the built-in `sum` function, `allocator_capabilities`, and `unique_allocator_compartments`, we can define an object that maps from a given compartment to its total allocation quota.
 
@@ -219,15 +218,7 @@ cheriot-audit --board=cheriot-rtos/sdk/boards/sonata.json \
 In this instance, the output of this test should be `true`, as our defined firmware meets these properties.
 You can check this yourself by looking at the source files and the values of the intermediary rules.
 To test that the policy is working, you can either change the amount of memory allocated by the firmware (making sure to rebuild), or change the policy itself to enforce lower limits.
-For example, changing the line
-```
-all_allocations_leq(20480)  # 20 KiB
-```
-to the new line
-```
-all_allocations_leq(10240)  # 10 KiB
-```
-should cause the `valid` rule of the policy to evaluate to `false`, because the `malloc_many` compartment contains a capability that permits the allocation of 16 KiB at once, which is greater than our specified limits.
+For example, changing the line `all_allocations_leq(20480) # 20 KiB` to `all_allocations_leq(10240) # 10 KiB` should cause the `valid` rule of the policy to evaluate to `false`, because the `malloc_many` compartment contains a capability that permits the allocation of 16 KiB at once, which is greater than our specified limit.
 
 Try playing around with these values to convince yourself that the policy is working as we expect it to.
 
@@ -246,4 +237,4 @@ There are other pieces of information that the linker exposes, which we do not u
 
 [hardware access control]: ../hardware_access_control/README.md#part-3
 
-Other ideas might include writing a policy that combines the above exercises, or integrating it into the `xmake` build system so that a given policy is automatically run when building your firmware image.
+Another idea is to write a policy that combines the above exercises, or integrating it into the `xmake` build system so that a given policy is automatically run when building your firmware image.
