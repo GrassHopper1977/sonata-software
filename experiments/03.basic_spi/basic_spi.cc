@@ -61,11 +61,6 @@ auto spi_mod2()
 #define MCP_CMD_WRITE	0x20
 #define MCP_ADDR_MAX	0x0FFF
 
-// void set_chip_select(volatile SonataSpi* mod, uint8_t chipSelect, bool value)
-// {
-// 	const uint32_t CsBit = (1u << chipSelect);
-// 	mod->cs = value ? (mod->cs | CsBit) : (mod->cs & ~CsBit);
-// }
 #define CLEAR_BIT(REG, BIT) (REG = REG & (~(1U << (BIT))))
 #define SET_BIT(REG, BIT)   (REG = REG | (1U << (BIT)))
 
@@ -113,7 +108,6 @@ void __cheri_compartment("main_comp") main_entry()
 	} else {
 		Debug::log("ERROR! Failed to set RPi GPIO8 to SPI1_CE0");
 	}
-	// set_chip_select(spi_mod1(), 0, true);
 #endif
 	// Set up the SPI1 module
 	spi_mod1()->init(
@@ -161,7 +155,6 @@ void __cheri_compartment("main_comp") main_entry()
 	} else {
 		Debug::log("ERROR! Failed to set RPi GPIO8 to SPI2_CE0");
 	}
-	// set_chip_select(spi_mod2(), 0, true);
 #endif
 	// Set up the SPI2   module
 	// The system clock is 40000000Hz (40MHz - 25ns)
