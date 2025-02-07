@@ -1,8 +1,16 @@
+#include <cdefs.h>
+#include <stdint.h>
 #include <thread.h>
-#include "driver/crc26-usb.h"
+
 #include <platform-gpio.hh>
 #include <platform-pinmux.hh>
 #include <platform-spi.hh>
+#include "ErrorsDef.h"
+#include "Conf_MCP251XFD.h"
+#include "crc/CRC16_CMS.hh"
+#include "MCP251XFD.hh"
+#include "interface.hh"
+
 
 // The SPI clock calculation
 // The settings is the length of a half period of the SPI clock, measured in system clock cycles reduced by 1.
@@ -15,24 +23,9 @@
 #define CLEAR_BIT(REG, BIT) (REG = REG & (~(1U << (BIT))))
 #define SET_BIT(REG, BIT)   (REG = REG | (1U << (BIT)))
 
-typedef struct {
-    SonataSpi *spi;
-    uint8_t spi_num;
-    SonataPinmux::OutputPin cs0;    // Setting Chip Select 0. Setting this to ser0_tx (0) disables this output.
-    uint8_t cs0_sel;
-    SonataPinmux::OutputPin cs1;    // Setting Chip Select 1. Setting this to ser0_tx (0) disables this output.
-    uint8_t cs1_sel;
-    SonataPinmux::OutputPin cs2;    // Setting Chip Select 2. Setting this to ser0_tx (0) disables this output.
-    uint8_t cs2_sel;
-    SonataPinmux::OutputPin sclk;   // Setting the clock output. MUST be a valid output to work.
-    uint8_t sclk_sel;
-    SonataPinmux::OutputPin copi;   // Setting the data output. Setting this to ser0_tx (0) disables this output.
-    uint8_t copi_sel;
-    uint8_t cipo;                   // Setting the data input. Setting to 0 disables.
-    SonataPinmux::BlockInput cipo_sel;
-} Spi_Config;
+using Debug = ConditionalDebug<true, "Interface.cc">;
 
-eERRORRESULT GetSpiConfig(Spi_Config* cfg, uint8_t spi_num, SonataPinmux::OutputPin cs0, SonataPinmux::OutputPin cs1, SonataPinmux::OutputPin sclk, SonataPinmux::OutputPin copi, uint8_t cipo) {
+eERRORRESULT GetSpiConfig(Spi_Config_t* cfg, uint8_t spi_num, SonataPinmux::OutputPin cs0, SonataPinmux::OutputPin cs1, SonataPinmux::OutputPin cs2, SonataPinmux::OutputPin sclk, SonataPinmux::OutputPin copi, uint8_t cipo) {
     if(spi_num == 1) {
         cfg->spi = MMIO_CAPABILITY(SonataSpi, spi1);    // Access to the SPI1 module
     } else if(spi_num == 2) {
@@ -44,7 +37,7 @@ eERRORRESULT GetSpiConfig(Spi_Config* cfg, uint8_t spi_num, SonataPinmux::Output
         // SCLK
         if((sclk == SonataPinmux::OutputPin::rph_g11) || (sclk == SonataPinmux::OutputPin::ah_tmpio13)) {
             cfg->sclk_sel = 1;
-        } else if(sclk == SonataPinmux::OutputPin::p_mod0_4) {
+        } else if(sclk == SonataPinmux::OutputPin::pmod0_4) {
             cfg->sclk_sel = 2;
         } else {
             return ERR__SPI_PARAMETER_ERROR;
@@ -52,7 +45,7 @@ eERRORRESULT GetSpiConfig(Spi_Config* cfg, uint8_t spi_num, SonataPinmux::Output
         // COPI
         if((copi == SonataPinmux::OutputPin::rph_g10) || (copi == SonataPinmux::OutputPin::ah_tmpio11)) {
             cfg->copi_sel = 1;
-        } else if(copi == SonataPinmux::OutputPin::p_mod0_2) {
+        } else if(copi == SonataPinmux::OutputPin::pmod0_2) {
             cfg->copi_sel = 2;
         } else {
             return ERR__SPI_PARAMETER_ERROR;
@@ -65,7 +58,7 @@ eERRORRESULT GetSpiConfig(Spi_Config* cfg, uint8_t spi_num, SonataPinmux::Output
         // CS0
         if(cs0 == SonataPinmux::OutputPin::rph_g8) {
             cfg->cs0_sel = 1;
-        } else if(cs0 == SonataPinmux::OutputPin::p_mod0_1) {
+        } else if(cs0 == SonataPinmux::OutputPin::pmod0_1) {
             cfg->cs0_sel = 2;
         } else if(cs0 == SonataPinmux::OutputPin::ser0_tx) {
             cfg->cs0_sel = 0; // Not Used
@@ -75,7 +68,7 @@ eERRORRESULT GetSpiConfig(Spi_Config* cfg, uint8_t spi_num, SonataPinmux::Output
         // CS1
         if(cs1 == SonataPinmux::OutputPin::rph_g7) {
             cfg->cs1_sel = 1;
-        } else if(cs1 == SonataPinmux::OutputPin::p_mod0_9) {
+        } else if(cs1 == SonataPinmux::OutputPin::pmod0_9) {
             cfg->cs1_sel = 2;
         } else if(cs1 == SonataPinmux::OutputPin::ser0_tx) {
             cfg->cs1_sel = 0; // Not Used
@@ -92,7 +85,7 @@ eERRORRESULT GetSpiConfig(Spi_Config* cfg, uint8_t spi_num, SonataPinmux::Output
         // SCLK
         if((sclk == SonataPinmux::OutputPin::rph_g21) || (sclk == SonataPinmux::OutputPin::mb2)) {
             cfg->sclk_sel = 1;
-        } else if(sclk == SonataPinmux::OutputPin::p_mod1_4) {
+        } else if(sclk == SonataPinmux::OutputPin::pmod1_4) {
             cfg->sclk_sel = 2;
         } else {
             return ERR__SPI_PARAMETER_ERROR;
@@ -100,7 +93,7 @@ eERRORRESULT GetSpiConfig(Spi_Config* cfg, uint8_t spi_num, SonataPinmux::Output
         // COPI
         if((copi == SonataPinmux::OutputPin::rph_g20) || (copi == SonataPinmux::OutputPin::mb4)) {
             cfg->copi_sel = 1;
-        } else if(copi == SonataPinmux::OutputPin::p_mod1_2) {
+        } else if(copi == SonataPinmux::OutputPin::pmod1_2) {
             cfg->copi_sel = 2;
         } else {
             return ERR__SPI_PARAMETER_ERROR;
@@ -113,7 +106,7 @@ eERRORRESULT GetSpiConfig(Spi_Config* cfg, uint8_t spi_num, SonataPinmux::Output
         // CS0
         if(cs0 == SonataPinmux::OutputPin::rph_g18) {
             cfg->cs0_sel = 1;
-        } else if(cs0 == SonataPinmux::OutputPin::p_mod1_1) {
+        } else if(cs0 == SonataPinmux::OutputPin::pmod1_1) {
             cfg->cs0_sel = 2;
         } else if(cs0 == SonataPinmux::OutputPin::ser0_tx) {
             cfg->cs0_sel = 0; // Not Used
@@ -123,7 +116,7 @@ eERRORRESULT GetSpiConfig(Spi_Config* cfg, uint8_t spi_num, SonataPinmux::Output
         // CS1
         if(cs1 == SonataPinmux::OutputPin::rph_g17) {
             cfg->cs1_sel = 1;
-        } else if(cs1 == SonataPinmux::OutputPin::p_mod1_9) {
+        } else if(cs1 == SonataPinmux::OutputPin::pmod1_9) {
             cfg->cs1_sel = 2;
         } else if(cs1 == SonataPinmux::OutputPin::ser0_tx) {
             cfg->cs1_sel = 0; // Not Used
@@ -133,7 +126,7 @@ eERRORRESULT GetSpiConfig(Spi_Config* cfg, uint8_t spi_num, SonataPinmux::Output
         // CS2
         if(cs1 == SonataPinmux::OutputPin::rph_g16) {
             cfg->cs1_sel = 1;
-        } else if(cs1 == SonataPinmux::OutputPin::p_mod1_10) {
+        } else if(cs1 == SonataPinmux::OutputPin::pmod1_10) {
             cfg->cs1_sel = 2;
         } else if(cs1 == SonataPinmux::OutputPin::ser0_tx) {
             cfg->cs1_sel = 0; // Not Used
@@ -161,7 +154,7 @@ uint32_t GetCurrentms_Sonata(void)
     // Written - 2025-01-10
     // Tested - 
     uint64_t cycles = rdcycle64();  // Hidden in riscvreg.h and included through thread.h
-    uint32_t msCount = static_cast<uint32_t>cycles * MS_PER_TICK;    // Driver is not bothered by it wrapping (apprently).
+    uint32_t msCount = static_cast<uint32_t>(cycles) * MS_PER_TICK;    // Driver is not bothered by it wrapping (apprently).
     return msCount;
 }
 //=============================================================================
@@ -177,9 +170,9 @@ uint16_t ComputeCRC16_Sonata(const uint8_t* data, size_t size)
     // miscommunication, even under noisy environments.
     // The best way to implement this will be with a prepared crc_table.
     // 
-    // Written - 2025-01-20
+    // Written - 2025-02-03
     // Tested - 
-    return crc16_usb(data, size);
+    return ComputeCRC16CMS(data, size);
 }
 //*******************************************************************************************************************
 //=============================================================================
@@ -194,7 +187,7 @@ eERRORRESULT MCP251XFD_InterfaceInit_Sonata(void *pIntDev, uint8_t chipSelect, c
     if (pIntDev == NULL)
         return ERR__SPI_PARAMETER_ERROR;
     // Get our data.
-    Spi_Config* cfg = (Spi_Config*)pIntDev;
+    Spi_Config_t* cfg = (Spi_Config_t*)pIntDev;
     // Configure the IO the chosen SPI
     auto pmx = SonataPinmux();
     uint8_t sel = 0;
@@ -207,19 +200,19 @@ eERRORRESULT MCP251XFD_InterfaceInit_Sonata(void *pIntDev, uint8_t chipSelect, c
         return ERR__SPI_PARAMETER_ERROR;
     }
     // CS0
-    if(cfg->cs0_Sel > 0) {
+    if(cfg->cs0_sel > 0) {
         if(false == pmx.output_pin_select(cfg->cs0, cfg->cs0_sel)) {
             return ERR__SPI_PARAMETER_ERROR;
         }
     }
     // CS1
-    if(cfg->cs1_Sel > 0) {
+    if(cfg->cs1_sel > 0) {
         if(false == pmx.output_pin_select(cfg->cs1, cfg->cs1_sel)) {
             return ERR__SPI_PARAMETER_ERROR;
         }
     }
     // CS2
-    if(cfg->cs2_Sel > 0) {
+    if(cfg->cs2_sel > 0) {
         if(false == pmx.output_pin_select(cfg->cs2, cfg->cs2_sel)) {
             return ERR__SPI_PARAMETER_ERROR;
         }
@@ -242,8 +235,7 @@ eERRORRESULT MCP251XFD_InterfaceInit_Sonata(void *pIntDev, uint8_t chipSelect, c
 //=============================================================================
 // MCP251XFD SPI transfer data for the Sonata
 //=============================================================================
-eERRORRESULT MCP251XFD_InterfaceTransfer_Sonata(void *pIntDev, uint8_t chipSelect, uint8_t *txData, uint8_t *rxData,
-size_t size)
+eERRORRESULT MCP251XFD_InterfaceTransfer_Sonata(void *pIntDev, uint8_t chipSelect, uint8_t *txData, uint8_t *rxData, size_t size)
 {
     // Perform an SPI transfer.
     // Written - 2025-01-21
@@ -254,8 +246,14 @@ size_t size)
     if (txData == NULL)
         return ERR__SPI_PARAMETER_ERROR;
     //Spi *SPI_Ext = (Spi *)pIntDev; // MCU specific: #define SPI0 ((Spi*)0x40008000U) // (SPI0) Base Address
-    Spi_Config* cfg = (Spi_Config*)pIntDev;
+    Spi_Config_t* cfg = (Spi_Config_t*)pIntDev;
     uint8_t DataRead;
+
+    // Debug::log("{}() {}: txData = {}", __FUNCTION__, __LINE__, txData);
+    // Debug::log("{}() {}: rxData = {}", __FUNCTION__, __LINE__, rxData);
+    // Debug::log("{}() {}:   size = {}", __FUNCTION__, __LINE__, size);
+    // if(txData != NULL) Debug::log("{}() {}: txData[]: {}, {}", __FUNCTION__, __LINE__, txData[0], txData[1]);
+    // if(rxData != NULL) Debug::log("{}() {}: rxData[]: {}, {}", __FUNCTION__, __LINE__, rxData[0], rxData[1]);
 
     CLEAR_BIT(cfg->spi->cs, chipSelect);    // Chip Select Low
     cfg->spi->blocking_transfer(txData, rxData, size);

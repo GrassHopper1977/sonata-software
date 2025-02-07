@@ -1,5 +1,6 @@
+#pragma once
 /*!*****************************************************************************
- * @file    Interface.h
+ * @file    Interface.hh
  * @details
  * The Sonata specific files required for the MCP251XFD driver.
  * This is designed to be able to switch multple CAN interfaces so we need to
@@ -9,12 +10,46 @@
  *      1        RPi Header pin 26 (SPI0_CE1)
  ******************************************************************************/
 
-#ifndef MCP251XFD_H_INC
-#define MCP251XFD_H_INC
+// #ifndef MCP251XFD_H_INC
+// #define MCP251XFD_H_INC
+
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif // __cplusplus
+
+struct Spi_Config {
+    volatile SonataSpi *spi;
+    uint8_t spi_num;
+    SonataPinmux::OutputPin cs0;    // Setting Chip Select 0. Setting this to ser0_tx (0) disables this output.
+    uint8_t cs0_sel;
+    SonataPinmux::OutputPin cs1;    // Setting Chip Select 1. Setting this to ser0_tx (0) disables this output.
+    uint8_t cs1_sel;
+    SonataPinmux::OutputPin cs2;    // Setting Chip Select 2. Setting this to ser0_tx (0) disables this output.
+    uint8_t cs2_sel;
+    SonataPinmux::OutputPin sclk;   // Setting the clock output. MUST be a valid output to work.
+    uint8_t sclk_sel;
+    SonataPinmux::OutputPin copi;   // Setting the data output. Setting this to ser0_tx (0) disables this output.
+    uint8_t copi_sel;
+    uint8_t cipo;                   // Setting the data input. Setting to 0 disables.
+    SonataPinmux::BlockInput cipo_sel;
+};
+typedef struct Spi_Config Spi_Config_t;
+
+/*! @brief Sonata configure SPI set-up function.
+*
+* This fills in the Spi_Config which will then be set in MCP251XFD->InterfaceDevice. 
+* @param[out] *cfg We will fill this in with the required settings.
+* @param[in] spi_num Is the SPI number. It MUST be 1 or 2 only.
+* @param[in] cs0 Which pin (from SonataPinmux::OutputPin) to use as CS0. Set to a valid option or will return an error. If it's not being used then set it to SonataPinmux::OutputPin::ser0_tx
+* @param[in] cs1 Which pin (from SonataPinmux::OutputPin) to use as CS1. Set to a valid option or will return an error. If it's not being used then set it to SonataPinmux::OutputPin::ser0_tx
+* @param[in] cs2 Which pin (from SonataPinmux::OutputPin) to use as CS2. Set to a valid option or will return an error. If it's not being used then set it to SonataPinmux::OutputPin::ser0_tx
+* @param[in] sclk Which pin (from SonataPinmux::OutputPin) to use as SPI SCLK. Set to a valid option or will return an error.
+* @param[in] copi Which pin (from SonataPinmux::OutputPin) to use as SPI COPI (MOSI). Set to a valid option or will return an error.
+* @param[in] cipo Which pin to use as SPI CIPO. Set to a valid option or will return an error. Must be 1 to 3, inclusive. See the pinmux documentation for the meaning of the input block to set here.
+* @return Returns an #eERRORRESULT value enum
+*/
+eERRORRESULT GetSpiConfig(Spi_Config* cfg, uint8_t spi_num, SonataPinmux::OutputPin cs0, SonataPinmux::OutputPin cs1, SonataPinmux::OutputPin cs2, SonataPinmux::OutputPin sclk, SonataPinmux::OutputPin copi, uint8_t cipo);
 
 /*! @brief MCP251XFD_X get millisecond
 *
@@ -61,6 +96,6 @@ size_t size);
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
 }
-#endif
+#endif // __cplusplus
 //-----------------------------------------------------------------------------
-#endif /* INTERFACE_H_INC */
+// #endif /* INTERFACE_H_INC */

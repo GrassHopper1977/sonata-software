@@ -14,10 +14,17 @@
  ******************************************************************************/
 
 //-----------------------------------------------------------------------------
-#include "MCP251XFD.h"
+#include <cdefs.h>
+#include <stdint.h>
+#include <thread.h>
+#include <debug.hh>
+#include <stdlib.h>
+#include "Conf_MCP251XFD.h"
+#include "MCP251XFD.hh"
+
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
-#  include <cstdint>
+#include <cstdint>
 extern "C" {
 #endif
 //-----------------------------------------------------------------------------
@@ -38,6 +45,8 @@ static eERRORRESULT __MCP251XFD_TestRAM(MCP251XFD *pComp);
 
 
 
+/// Expose debugging features unconditionally for this compartment.
+using Debug = ConditionalDebug<true, "MCP251XFD.cc">;
 
 
 //**********************************************************************************************************************************************************
@@ -77,10 +86,11 @@ eERRORRESULT Init_MCP251XFD(MCP251XFD *pComp, const MCP251XFD_Config *pConf)
   if (Error != ERR_NONE) return Error;                                                                   // If there is an error while calling MCP251XFD_ResetDevice() then return the error
   pComp->InternalConfig = MCP251XFD_DEV_PS_SET(MCP251XFD_DEVICE_SLEEP_NOT_CONFIGURED);                   // Device is in normal power state, sleep is not yet configured
 
-  //--- Test SPI connection ---------------------------------
+    //--- Test SPI connection ---------------------------------
   Error = MCP251XFD_WriteRAM32(pComp, (MCP251XFD_RAM_ADDR + MCP251XFD_RAM_SIZE - 4), 0xAA55AA55);        // Write 0xAA55AA55 at address
   if (Error != ERR_NONE) return Error;                                                                   // If there is an error while writing the RAM address then return the error
   Error = MCP251XFD_ReadRAM32(pComp, (MCP251XFD_RAM_ADDR + MCP251XFD_RAM_SIZE - 4), &Result);            // Read again the data
+  
   if ((Error == ERR__CRC_ERROR) || (Result != 0xAA55AA55)) return ERR__NO_DEVICE_DETECTED;               // If CRC mismatch or data read is not 0xAA55AA55 then no device is detected
   if (Error != ERR_NONE) return Error;                                                                   // If there is an error while reading the RAM address then return the error
 
@@ -934,7 +944,9 @@ eERRORRESULT MCP251XFD_CalculateBitrateStatistics(const uint32_t fsysclk, MCP251
   {
     DTQbits = (MCP251XFD_DSYNC + (pConf->DTSEG1+1) + (pConf->DTSEG2+1));          // DTQ per bits = DSYNC + DTSEG1 + DTSEG2 (Equation 3-6 of MCP25XXFD Family Reference Manual)
     SamplePoint = ((MCP251XFD_DSYNC + (pConf->DTSEG1+1)) * 100) / DTQbits;        // Calculate actual data sample point
-    pConf->Stats->DSamplePoint = (uint32_t)(SamplePoint * 100.0f);                // ** Save actual Data sample point with 2 digits after the decimal point (divide by 100 to get percentage)
+    //pConf->Stats->DSamplePoint = (uint32_t)(SamplePoint * 100.0f);                // ** Save actual Data sample point with 2 digits after the decimal point (divide by 100 to get percentage)
+    // We don't have floats yet!
+    pConf->Stats->DSamplePoint = (uint32_t)(SamplePoint * 100);                   // ** Save actual Data sample point with 2 digits after the decimal point (divide by 100 to get percentage)
     pConf->Stats->DataBitrate  = (fsysclk / (pConf->DBRP+1) / DTQbits);           // ** Save actual Data Bitrate
   }
   else
@@ -1779,7 +1791,7 @@ eERRORRESULT MCP251XFD_SetFIFOinterruptConfiguration(MCP251XFD *pComp, eMCP251XF
   if (name == MCP251XFD_TXQ) Address = RegMCP251XFD_CiTXQCON_CONFIG;                                     // If it's the TXQ then select its address
 
   //--- Read the FIFO's register ---
-  interruptFlags &= MCP251XFD_FIFO_ALL_INTERRUPTS_FLAGS;
+  interruptFlags = static_cast<eMCP251XFD_FIFOIntFlags>(interruptFlags & MCP251XFD_FIFO_ALL_INTERRUPTS_FLAGS);
   Error = MCP251XFD_ReadSFR8(pComp, Address, &Config);                                                   // Read actual configuration of the FIFO's register
   if (Error != ERR_OK) return Error;                                                                     // If there is an error while calling MCP251XFD_ReadSFR8() then return the error
 
@@ -1832,7 +1844,7 @@ eERRORRESULT MCP251XFD_ConfigureFilter(MCP251XFD *pComp, MCP251XFD_Filter *confF
 
   //--- Check if the filter is disabled ---
   MCP251XFD_CiFLTCONm_Register FilterConf;
-  uint16_t AddrFLTCON = RegMCP251XFD_CiFLTCONm + confFilter->Filter;      // Select the address of the FLTCON
+  uint16_t AddrFLTCON = static_cast<uint16_t>(RegMCP251XFD_CiFLTCONm) + static_cast<uint16_t>(confFilter->Filter);      // Select the address of the FLTCON
   Error = MCP251XFD_ReadSFR8(pComp, AddrFLTCON, &FilterConf.CiFLTCONm);   // Read actual flags configuration of the RegMCP251XFD_CiFLTCONm register
   if (Error != ERR_NONE) return Error;                                    // If there is an error while calling MCP251XFD_ReadSFR8() then return the error
   if ((FilterConf.CiFLTCONm & MCP251XFD_CAN_CiFLTCONm_ENABLE) > 0)
@@ -1942,7 +1954,7 @@ eERRORRESULT MCP251XFD_DisableFilter(MCP251XFD *pComp, eMCP251XFD_Filter name)
   eERRORRESULT Error;
   MCP251XFD_CiFLTCONm_Register FilterConf;
 
-  uint16_t AddrFLTCON = RegMCP251XFD_CiFLTCONm + name;                    // Select the address of the FLTCON
+  uint16_t AddrFLTCON = static_cast<uint16_t>(RegMCP251XFD_CiFLTCONm) + static_cast<uint16_t>(name);                    // Select the address of the FLTCON
   Error = MCP251XFD_ReadSFR8(pComp, AddrFLTCON, &FilterConf.CiFLTCONm);   // Read actual flags configuration of the RegMCP251XFD_CiFLTCONm register
   if (Error != ERR_NONE) return Error;                                    // If there is an error while calling MCP251XFD_ReadSFR8() then return the error
   if ((FilterConf.CiFLTCONm & MCP251XFD_CAN_CiFLTCONm_ENABLE) > 0)

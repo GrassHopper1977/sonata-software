@@ -16,6 +16,9 @@ option("board")
 compartment("main_comp")
     add_deps("debug")
     add_files("example.cc")
+    add_files("driver/interface.cc")
+    add_files("driver/MCP251XFD.cc")
+    add_files("driver/crc/CRC16_CMS.cc")
 
 firmware("mcp251xfd")
     add_deps("freestanding", "main_comp")
@@ -26,7 +29,7 @@ firmware("mcp251xfd")
                 compartment = "main_comp",
                 priority = 2,
                 entry_point = "main_entry",
-                stack_size = 0x200,
+                stack_size = 0x800,
                 trusted_stack_frames = 1
             },
         }, {expand = false})

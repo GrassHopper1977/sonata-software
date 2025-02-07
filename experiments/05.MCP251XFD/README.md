@@ -81,3 +81,7 @@ data)
 same size
     * Returns an #eERRORRESULT value enum
 
+This does a lot of casting enums to ints and has required quite a bit of work to get to even compile. When it runs it fails with a TAG error immediately. Puzzling.
+
+## [Pierre Molinaro's ACAN251XFD driver](https://github.com/pierremolinaro/acan2517FD)
+This was written for Arduino and will, therefore, require quite a bit of work to convert. However, it's a much simpler affair than the alternative driver.

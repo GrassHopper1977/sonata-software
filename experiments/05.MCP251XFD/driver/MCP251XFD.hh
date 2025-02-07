@@ -3481,7 +3481,7 @@ typedef struct MCP251XFD_Config
 
   //--- CAN configuration ---
   uint32_t NominalBitrate;                        //!< Speed of the Frame description and arbitration
-  uint32_t DataBitrate;                           //!< Speed of all the data bytes of the frame (if CAN2.0 only mode, set to value NO_CANFD)
+  uint32_t DataBitrate;                           //!< Speed of all the data bytes of the frame (if CAN2.0 only mode, set to value MCP251XFD_NO_CANFD)
   MCP251XFD_BitTimeStats *BitTimeStats;           //!< Point to a Bit Time stat structure (set to NULL if no statistics are necessary)
   eMCP251XFD_Bandwidth Bandwidth;                 //!< Transmit Bandwidth Sharing, this is the delay between two consecutive transmissions (in arbitration bit times)
   setMCP251XFD_CANCtrlFlags ControlFlags;         //!< Set of CAN control flags to configure the CAN controller. Configuration can be OR'ed
